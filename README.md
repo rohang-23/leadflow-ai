@@ -29,6 +29,19 @@ The system uses LLM-based AI analysis to:
 
 ---
 
+## Screenshots
+
+### Home Page
+![Home Page](assets/homepage.png)
+
+### Filled Lead Form
+![Filled Form](assets/filled-form.png)
+
+### AI Analysis Result
+![Result](assets/result.png)
+
+---
+
 ## Tech Stack
 
 ### Frontend
