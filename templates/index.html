@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Lead Qualification Bot</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <h1>LeadFlow AI</h1>
+           <p>AI-powered sales lead qualification and automation platform</p>
+        </div>
+
+        <div class="form-box">
+            <input type="text" id="name" placeholder="Lead Name">
+            <input type="text" id="company" placeholder="Company Name">
+            <input type="text" id="industry" placeholder="Industry">
+            <input type="text" id="size" placeholder="Company Size">
+            <input type="text" id="budget" placeholder="Budget">
+            <textarea id="problem" placeholder="Describe lead's problem / requirement"></textarea>
+
+            <div class="button-group">
+                  <button onclick="analyzeLead()">Analyze Lead</button>
+                  <button onclick="clearForm()">Clear Form</button>
+            </div>
+
+            <div id="loading" class="loading hidden">
+                <div class="spinner"></div>
+                <p>Analyzing with AI...</p>
+            </div>
+        </div>
+
+        <div id="result-box" class="hidden">
+            <h2>Analysis Result</h2>
+<div id="score-badge"></div>
+            <pre id="result"></pre>
+            <div class="button-group">
+    <button onclick="copyResult()">Copy Output</button>
+    <button onclick="downloadReport()">Download Report</button>
+</div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+
+</body>
+</html>
