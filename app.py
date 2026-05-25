@@ -6,8 +6,13 @@ from dotenv import load_dotenv
 load_dotenv()
 
 app = Flask(__name__)
-
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+
+MODELS = [
+    "openai/gpt-oss-20b:free",
+    "meta-llama/llama-3.1-8b-instruct:free",
+    "qwen/qwen-2.5-7b-instruct:free"
+]
 
 
 @app.route("/")
@@ -15,12 +20,41 @@ def home():
     return render_template("index.html")
 
 
+def try_model(prompt, model):
+    response = requests.post(
+        "https://openrouter.ai/api/v1/chat/completions",
+        headers={
+            "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+            "Content-Type": "application/json",
+            "HTTP-Referer": "http://localhost:5000",
+            "X-Title": "LeadFlow AI"
+        },
+        json={
+            "model": model,
+            "messages": [
+                {"role": "user", "content": prompt}
+            ]
+        },
+        timeout=60
+    )
+
+    if response.status_code != 200:
+        return None, response.text
+
+    result = response.json()
+
+    if "choices" not in result:
+        return None, result
+
+    return result["choices"][0]["message"]["content"], None
+
+
 @app.route("/analyze", methods=["POST"])
 def analyze():
     try:
         if not OPENROUTER_API_KEY:
             return jsonify({
-                "result": "Error: OPENROUTER_API_KEY not found in .env file"
+                "result": "OPENROUTER_API_KEY missing in .env"
             })
 
         data = request.json
@@ -28,14 +62,7 @@ def analyze():
         prompt = f"""
 You are an expert B2B sales automation assistant.
 
-Your job is to qualify inbound leads for a SaaS company.
-
-Analyze the lead using:
-- budget
-- company size
-- industry fit
-- problem urgency
-- likelihood to convert
+Qualify this inbound SaaS lead.
 
 Lead Details:
 Name: {data.get('name')}
@@ -46,7 +73,7 @@ Budget: {data.get('budget')}
 Problem Statement: {data.get('problem')}
 
 Rules:
-- Score between 0–100
+- Score 0 to 100
 - Hot = 75+
 - Warm = 45–74
 - Cold = below 45
@@ -57,44 +84,24 @@ Lead Score: X/100
 Category: Hot/Warm/Cold
 
 Summary:
-2–3 lines business summary
+2–3 line business summary
 
 Recommended Action:
-clear sales next step
+Best next action
 
 Follow-up Email:
-professional concise email
+Professional concise follow-up email
 """
 
-        response = requests.post(
-            "https://openrouter.ai/api/v1/chat/completions",
-            headers={
-                "Authorization": f"Bearer {OPENROUTER_API_KEY}",
-                "Content-Type": "application/json",
-                "HTTP-Referer": "http://localhost:5000",
-                "X-Title": "Lead Qualification Bot"
-            },
-            json={
-                "model": "openai/gpt-oss-20b:free",
-                "messages": [
-                    {
-                        "role": "user",
-                        "content": prompt
-                    }
-                ]
-            },
-            timeout=60
-        )
-
-        if response.status_code != 200:
-            return jsonify({
-                "result": f"API Error {response.status_code}: {response.text}"
-            })
-
-        result = response.json()
+        for model in MODELS:
+            output, error = try_model(prompt, model)
+            if output:
+                return jsonify({
+                    "result": output
+                })
 
         return jsonify({
-            "result": result["choices"][0]["message"]["content"]
+            "result": f"All providers failed. Last error: {error}"
         })
 
     except Exception as e:
